@@ -1,0 +1,32 @@
+FROM ruby:3.4.1
+
+ENV LANG=C.UTF-8 \
+  TZ=Asia/Tokyo
+
+# Node.jsの最新のLTS版をインストール
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+  && apt-get update \
+  && apt-get install -y \
+  postgresql-client \
+  nodejs \
+  yarn \
+  build-essential \
+  libpq-dev
+
+WORKDIR /web
+
+COPY Gemfile /web/Gemfile
+COPY Gemfile.lock /web/Gemfile.lock
+
+RUN gem update --system \
+  && gem install bundler solargraph \
+  && bundle install
+
+COPY . /web
+
+COPY entrypoint.sh /usr/bin/
+RUN chmod +x /usr/bin/entrypoint.sh
+ENTRYPOINT ["entrypoint.sh"]
+
+EXPOSE 3000
+CMD ["rails", "server", "-b", "0.0.0.0"]
